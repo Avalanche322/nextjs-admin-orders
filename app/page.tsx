@@ -1,95 +1,60 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import { TableContainer, Box, Table, TableHead, TableRow, TableCell, TableBody, Paper, Link, Container } from "@mui/material";
+import Typography from "@mui/material/Typography";
+import SearchInput from "@/components/SearchInput";
+import {getOrdersWithTotal} from "@/lib/api";
+import formatDate from "@/lib/formatDate";
 
-export default function Home() {
+export default async function Home({searchParams}: { searchParams: Promise<{search?: string}> }) {
+    const search = (await searchParams).search || '';
+
+    let cart = await getOrdersWithTotal()
+
+    if(search) {
+        cart = cart.filter(cart => cart.id === Number(search) || cart.userId === Number(search))
+    }
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <Container sx={{py: 5, mt: 5}}>
+      <Typography variant="h4" gutterBottom>
+        Orders Dashboard
+      </Typography>
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      <Box sx={{my: 5}}>
+        <SearchInput search={search} />
+      </Box>
+
+      {cart.length ? <TableContainer component={Paper}>
+        <Table sx={{minWidth: 650}} aria-label="simple table">
+          <TableHead>
+            <TableRow>
+              <TableCell>ID</TableCell>
+              <TableCell align="right">User ID</TableCell>
+              <TableCell align="right">Date</TableCell>
+              <TableCell align="right">Total price</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {cart.map((row) => (
+                <TableRow
+                    key={row.id}
+                    hover
+                    sx={{'&:last-child td, &:last-child th': {border: 0}}}
+                >
+                  <TableCell component="th" scope="row">
+                    <Link href={`/orders/${row.id}`} style={{ color: "#1976d2", textDecoration: "none" }}>{row.id}</Link>
+                  </TableCell>
+                  <TableCell align="right">{row.userId}</TableCell>
+                  <TableCell align="right">{formatDate(row.date)}</TableCell>
+                  <TableCell align="right">{row.total}</TableCell>
+                </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer> : (
+          <Box sx={{display: 'flex', justifyContent: 'center', mt: 5}}>
+            <Typography>No Data :(</Typography>
+          </Box>
+      )}
+    </Container>
   );
 }
